@@ -124,14 +124,14 @@ def main():
                     'block_number': row['evt_block_number'],
                     'blockchain': row['blockchain'],
                     'tx_hash': row['evt_tx_hash'],
-                    'debt_vault_address': row['debt_vault_address'],
                     'collateral_vault_address': row['collateral_vault_address'],
-                    'unit_of_account': unit_of_account,
-                    'debt_token_amount': float(row['debt_token_amount']),
-                    'debt_price': debt_price,
                     'collateral_token_amount': float(row['collateral_token_amount']),
                     'collateral_price': collateral_price,
-                    'oracle_address': oracle_address  # Include for debugging
+                    'debt_vault_address': row['debt_vault_address'],
+                    'debt_token_amount': float(row['debt_token_amount']),
+                    'debt_price': debt_price,
+                    'oracle_address': oracle_address,
+                    'unit_of_account': unit_of_account    
                 })
 
             except Exception as e:
