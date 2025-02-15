@@ -1,33 +1,17 @@
-from flask import Flask, jsonify
-import requests
-from web3 import Web3
-from datetime import datetime
-import pandas as pd
-from dotenv import load_dotenv
+import dotenv
 import os
+import pandas as pd
+import requests
 from dune_client.client import DuneClient
-from dune_client.types import QueryParameter
-from flask_caching import Cache
+from dune_client.query import QueryBase
 
 # Load environment variables from .env file
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), '.', '.env')
+dotenv.load_dotenv(dotenv_path)
+dune = DuneClient.from_env()
 
-# Initialize Flask app and cache
-app = Flask(__name__)
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-
-# Initialize Dune client with API key
-DUNE_API_KEY = os.getenv('DUNE_API_KEY')
-dune = DuneClient(DUNE_API_KEY)
-
-# Configure RPC endpoints
-RPC_ENDPOINTS = {
-    'ethereum': 'https://eth.drpc.org',
-    'base': 'https://base-rpc.publicnode.com'
-}
-
-# Helper function to make ethereum RPC calls
 def make_eth_call(rpc_url, to_address, data, block="latest"):
+    """Make an eth_call to the specified RPC endpoint"""
     payload = {
         "jsonrpc": "2.0",
         "method": "eth_call",
@@ -39,144 +23,143 @@ def make_eth_call(rpc_url, to_address, data, block="latest"):
     }
     headers = {"Content-Type": "application/json"}
     response = requests.post(rpc_url, json=payload, headers=headers)
-    return response.json()['result']
+    return response.json().get('result')
 
-# Cache the vault index data for 5 minutes
-@cache.memoize(timeout=300)
-def get_vault_index():
-    """Fetch the Euler Finance index data from Dune"""
-    query = """
-    select distinct
-        vault_address,
-        blockchain,
-        name,
-        entity,
-        asset_token,
-        symbol,
-        debt_token
-    from dune."0xpibs".result_euler_finance_index
-    """
-    results = dune.execute_query(query)
-    return results.result.rows
-
-# Cache the liquidation events for 5 minutes
-@cache.memoize(timeout=300)
-def get_liquidation_events():
-    """Fetch the liquidation events from Dune"""
-    query = """
-    select distinct
-        evt_block_number,
-        chain as blockchain,
-        cast(concat('0x', format('%x', evt_block_number)) as varchar) as block_number_hex,
-        evt_tx_hash,
-        collateral as collateral_vault_address,
-        contract_address as debt_vault_address,
-        yieldbalance as collateral_token_amount,
-        repayassets as debt_token_amount
-    from euler_v2_multichain.EVault_evt_Liquidate
-    order by evt_block_number desc
-    limit 100  -- Limiting to recent events for testing
-    """
-    results = dune.execute_query(query)
-    return results.result.rows
-
-def get_oracle_price(rpc_url, oracle, amount, token, unit_of_account, block):
-    """Calculate oracle price for given parameters"""
-    # Construct calldata for oracle price check
-    calldata = (
-        "0xae68676c" +  # Function selector for getPrice()
-        Web3.to_hex(int(float(amount)))[2:].zfill(64) +  # Amount
-        token[2:].zfill(64) +  # Token address
-        unit_of_account[2:].zfill(64)  # Unit of account address
-    )
-    
-    result = make_eth_call(rpc_url, oracle, calldata, block)
-    return int(result, 16) / (10 ** 18)  # Convert to decimal
-
-# Main API endpoint
-@app.route('/liquidations', methods=['GET'])
-def get_liquidations():
+def get_oracle_address(rpc_url, vault_address):
+    """Get oracle address from vault contract"""
     try:
+        data = "0x7dc0d1d0"
+        result = make_eth_call(rpc_url, vault_address, data)
+        if result:
+            return "0x" + result[26:]  # Extract address from result (skip first 12 bytes)
+        return None
+    except Exception as e:
+        print(f"Error getting oracle address for vault {vault_address}: {str(e)}")
+        return None
+
+def get_unit_of_account(rpc_url, vault_address):
+    """Get unit of account from vault contract"""
+    try:
+        data = "0x3e833364"
+        result = make_eth_call(rpc_url, vault_address, data)
+        if result:
+            return "0x" + result[26:]  # Extract address from result (skip first 12 bytes)
+        return None
+    except Exception as e:
+        print(f"Error getting unit of account: {str(e)}")
+        return None
+
+def get_oracle_price(rpc_url, oracle_address, amount, token_address, unit_of_account, block):
+    """Get price from Euler oracle"""
+    try:
+        data = "0xae68676c" + \
+               format(int(float(amount)), '064x') + \
+               token_address.replace('0x', '').zfill(64) + \
+               unit_of_account.replace('0x', '').zfill(64)
+        
+        result = make_eth_call(rpc_url, oracle_address, data, block)
+        if result:
+            return int(result, 16) / (10 ** 18)
+        return None
+    except Exception as e:
+        print(f"Error getting oracle price: {str(e)}")
+        return None
+
+def main():
+    try:
+        print("Starting data retrieval...")
+
+        # Create a Query object
+        query = QueryBase(
+            query_id=4727182,  # Replace with your actual query ID
+            name="Euler Liquidations"
+        )
+        
         # Get base data from Dune
-        liquidation_events = get_liquidation_events()
-        vault_index = get_vault_index()
-
-        # Create lookup dictionary for vault data
-        vault_lookup = {v['vault_address']: v for v in vault_index}
-
-        results = []
-        for event in liquidation_events:
+        results = dune.run_query(query)
+        
+        processed_results = []
+        for row in results.get_rows():
             try:
-                # Get oracle address
-                oracle_data = make_eth_call(
-                    RPC_ENDPOINTS[event['blockchain']],
-                    event['debt_vault_address'],
-                    "0x7dc0d1d0"  # Function selector for oracle()
-                )
-                oracle_address = "0x" + oracle_data[26:66]
+                # Get the RPC URL directly from the row
+                rpc_url = row['rpc_url']  # Ensure your Dune query includes this column
+                print(f"Processing vault: {row['debt_vault_address']} on blockchain: {row['blockchain']} with RPC: {rpc_url}")  # Debugging output
+                if not rpc_url:
+                    print(f"Skipping row - no RPC URL for blockchain: {row['blockchain']}")
+                    continue
 
-                # Get unit of account
-                uoa_data = make_eth_call(
-                    RPC_ENDPOINTS[event['blockchain']],
-                    event['debt_vault_address'],
-                    "0x3e833364"  # Function selector for unitOfAccount()
-                )
-                unit_of_account = "0x" + uoa_data[26:66]
+                # Get oracle address from vault contract using the correct RPC
+                oracle_address = get_oracle_address(rpc_url, row['debt_vault_address'])
+                if not oracle_address:
+                    print(f"Skipping row - couldn't get oracle address for vault: {row['debt_vault_address']}")
+                    continue
 
-                # Get vault details
-                debt_vault = vault_lookup.get(event['debt_vault_address'], {})
-                collateral_vault = vault_lookup.get(event['collateral_vault_address'], {})
+                # Get unit of account from vault contract using the correct RPC
+                unit_of_account = get_unit_of_account(rpc_url, row['debt_vault_address'])
+                if not unit_of_account:
+                    print(f"Skipping row - couldn't get unit of account for vault: {row['debt_vault_address']}")
+                    continue
 
-                # Calculate prices using oracle
+                # Get debt price
                 debt_price = get_oracle_price(
-                    RPC_ENDPOINTS[event['blockchain']],
-                    oracle_address,
-                    event['debt_token_amount'],
-                    debt_vault.get('asset_token', event['debt_vault_address']),
-                    unit_of_account,
-                    event['block_number_hex']
+                    rpc_url=rpc_url,
+                    oracle_address=oracle_address,
+                    amount=row['debt_token_amount'],
+                    token_address=row['debt_asset_token'],
+                    unit_of_account=unit_of_account,
+                    block=row['block_number_hex']
                 )
 
+                # Get collateral price
                 collateral_price = get_oracle_price(
-                    RPC_ENDPOINTS[event['blockchain']],
-                    oracle_address,
-                    event['collateral_token_amount'],
-                    event['collateral_vault_address'],
-                    unit_of_account,
-                    event['block_number_hex']
+                    rpc_url=rpc_url,
+                    oracle_address=oracle_address,
+                    amount=row['collateral_token_amount'],
+                    token_address=row['collateral_vault_address'],
+                    unit_of_account=unit_of_account,
+                    block=row['block_number_hex']
                 )
 
-                results.append({
-                    'block_number': event['evt_block_number'],
-                    'blockchain': event['blockchain'],
-                    'tx_hash': event['evt_tx_hash'],
-                    'debt_vault_address': event['debt_vault_address'],
-                    'debt_vault_name': debt_vault.get('name', 'Unknown'),
-                    'collateral_vault_address': event['collateral_vault_address'],
-                    'collateral_vault_name': collateral_vault.get('name', 'Unknown'),
-                    'debt_token_amount': event['debt_token_amount'],
-                    'collateral_token_amount': event['collateral_token_amount'],
+                processed_results.append({
+                    'block_number': row['evt_block_number'],
+                    'blockchain': row['blockchain'],
+                    'tx_hash': row['evt_tx_hash'],
+                    'debt_vault_address': row['debt_vault_address'],
+                    'collateral_vault_address': row['collateral_vault_address'],
+                    'unit_of_account': unit_of_account,
+                    'debt_token_amount': float(row['debt_token_amount']),
                     'debt_price': debt_price,
+                    'collateral_token_amount': float(row['collateral_token_amount']),
                     'collateral_price': collateral_price,
-                    'liquidation_bonus': collateral_price - debt_price,
-                    'liquidation_bonus_rate': (collateral_price / debt_price) - 1 if debt_price else None,
-                    'unit_of_account': unit_of_account
+                    'oracle_address': oracle_address  # Include for debugging
                 })
 
             except Exception as e:
-                print(f"Error processing event: {e}")
+                print(f"Error processing row: {str(e)}")
+                print(f"Row data: {row}")
                 continue
 
-        return jsonify({
-            'status': 'success',
-            'data': results
-        })
+        # Convert processed results to DataFrame
+        df = pd.DataFrame(processed_results)
+
+        # Save DataFrame to CSV
+        csv_file_path = 'euler_liquidations.csv'
+        df.to_csv(csv_file_path, index=False)
+        print(f"Data saved to {csv_file_path}. Uploading to Dune...")
+
+        # Upload the CSV to Dune
+        with open(csv_file_path, "rb") as data:
+            response = dune.insert_table(
+                namespace="0xpibs",
+                table_name="euler_liquidations",
+                data=data,
+                content_type="text/csv"
+            )
+
+        print("Data uploaded successfully to Dune.")
 
     except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+        print(f"Error in main execution: {str(e)}")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    main()
