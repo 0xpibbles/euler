@@ -1,0 +1,24 @@
+name: Run Python Script
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Runs every hour (modify as needed)
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Script
+        run: python app.py
