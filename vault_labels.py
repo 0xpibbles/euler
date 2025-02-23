@@ -10,6 +10,14 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.', '.env')
 dotenv.load_dotenv(dotenv_path)
 dune = DuneClient.from_env()
 
+url = "https://api.dune.com/api/v1/table/0xpibs/euler_vault_labels/clear"
+
+headers = {
+    "X-DUNE-API-KEY": os.getenv("DUNE_API_KEY")
+}
+
+response = requests.request("POST", url, headers=headers)
+
 # URLs for the JSON files
 urls = {
     'ethereum': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/1/vaults.json',
