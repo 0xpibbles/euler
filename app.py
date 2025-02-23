@@ -76,7 +76,7 @@ def main():
         )
         
         # Get base data from Dune
-        results = dune.execute_query(query)
+        results = dune.run_query(query)
         
         processed_results = []
         for row in results.get_rows():
