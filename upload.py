@@ -7,20 +7,14 @@ dune = DuneClient.from_env()
 
 table = dune.create_table(
         namespace="0xpibs",
-        table_name="euler_liquidations",
-        description="liquidations from euler",
+        table_name="euler_vault_labels",
+        description="euler vault labels",
         schema= [
-            {"name": "block_number", "type": "uint256"},
             {"name": "blockchain", "type": "varchar"},
-            {"name": "tx_hash", "type": "varchar"},
-            {"name": "collateral_vault_address", "type": "varchar", "nullable": True},
-            {"name": "collateral_token_amount", "type": "double", "nullable": True},
-            {"name": "collateral_price", "type": "double", "nullable": True},
-            {"name": "debt_vault_address", "type": "varchar", "nullable": True},
-            {"name": "debt_token_amount", "type": "double", "nullable": True},
-            {"name": "debt_price", "type": "double", "nullable": True},
-            {"name": "oracle_address", "type": "varchar", "nullable": True},
-            {"name": "unit_of_account", "type": "varchar", "nullable": True}
+            {"name": "vault", "type": "varchar"},
+            {"name": "name", "type": "varchar"},
+            {"name": "description", "type": "varchar", "nullable": True},
+            {"name": "entity", "type": "varchar", "nullable": True}
         ],
         is_private=False
 )

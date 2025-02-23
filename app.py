@@ -76,7 +76,7 @@ def main():
         )
         
         # Get base data from Dune
-        results = dune.run_query(query)
+        results = dune.execute_query(query)
         
         processed_results = []
         for row in results.get_rows():
@@ -124,9 +124,11 @@ def main():
                     'block_number': row['evt_block_number'],
                     'blockchain': row['blockchain'],
                     'tx_hash': row['evt_tx_hash'],
+                    'collateral_vault_name': row['collateral_vault_name'],
                     'collateral_vault_address': row['collateral_vault_address'],
                     'collateral_token_amount': float(row['collateral_token_amount']),
                     'collateral_price': collateral_price,
+                    'debt_vault_name': row['debt_vault_name'],
                     'debt_vault_address': row['debt_vault_address'],
                     'debt_token_amount': float(row['debt_token_amount']),
                     'debt_price': debt_price,
