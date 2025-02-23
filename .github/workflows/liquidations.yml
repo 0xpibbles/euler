@@ -1,5 +1,4 @@
-name: Run Python Script
-
+name: Run liquidations
 on:
   schedule:
     - cron: "0 0 * * *"  # Runs every hour (modify as needed)
