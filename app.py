@@ -152,7 +152,7 @@ def main():
         # Upload the CSV to Dune
         with open(csv_file_path, "rb") as data:
             response = dune.insert_table(
-                namespace="0xpibs",
+                namespace="pibbles",
                 table_name="euler_liquidations",
                 data=data,
                 content_type="text/csv"
