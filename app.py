@@ -121,7 +121,7 @@ def main():
                 )
 
                 processed_results.append({
-                    'block_number': row['evt_block_number'],
+                    'evt_block_number': row['evt_block_number'],
                     'blockchain': row['blockchain'],
                     'tx_hash': row['evt_tx_hash'],
                     'collateral_vault_name': row['collateral_vault_name'],
