@@ -10,7 +10,7 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.', '.env')
 dotenv.load_dotenv(dotenv_path)
 dune = DuneClient.from_env()
 
-url = "https://api.dune.com/api/v1/table/0xpibs/euler_vault_labels/clear"
+url = "https://api.dune.com/api/v1/table/pibbles/euler_vault_labels/clear"
 
 headers = {
     "X-DUNE-API-KEY": os.getenv("DUNE_API_KEY")
@@ -61,7 +61,7 @@ print(f"Data saved to {csv_file_path}.")
 # Upload the CSV to Dune
 with open(csv_file_path, "rb") as data_file:
     response = dune.insert_table(
-        namespace="0xpibs",  # Replace with your namespace
+        namespace="pibbles",  # Replace with your namespace
         table_name="euler_vault_labels",
         data=data_file,
         content_type="text/csv"
