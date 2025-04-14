@@ -2,7 +2,7 @@ name: Run vault_labels
 
 on:
   schedule:
-    - cron: "0 0 * * 1,4,7"
+    - cron: "0 0 */3 * *"
   workflow_dispatch: 
 
 jobs:
