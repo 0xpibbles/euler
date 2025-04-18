@@ -22,7 +22,14 @@ response = requests.request("POST", url, headers=headers)
 urls = {
     'ethereum': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/1/vaults.json',
     'base': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/8453/vaults.json',
-    'sonic': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/146/vaults.json'
+    'sonic': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/146/vaults.json',
+    'berachain': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/80094/vaults.json',
+    'avalanche_c': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/43114/vaults.json',
+    'bnb': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/56/vaults.json',
+    'arbitrum': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/42161/vaults.json',
+    'optimism': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/10/vaults.json',
+    # 'linea': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/59144/vaults.json',
+
 }
 
 # Initialize a list to hold the processed data
