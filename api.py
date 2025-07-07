@@ -119,7 +119,7 @@ def get_liquidations():
                     rpc_url=rpc_url,
                     oracle_address=oracle_address,
                     amount=row['collateral_token_amount'],
-                    token_address=row['collateral_asset_token'],
+                    token_address=row['collateral_vault_address'],
                     unit_of_account=unit_of_account,
                     block=row['block_number_hex']
                 )
