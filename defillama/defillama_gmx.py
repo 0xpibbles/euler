@@ -4,20 +4,20 @@ from datetime import datetime, timezone
 from dune_client.client import DuneClient
 
 # 1. Fetch the TVL from DefiLlama
-url = "https://api.llama.fi/protocol/aave"
+url = "https://api.llama.fi/protocol/gmx"
 response = requests.get(url)
 response.raise_for_status()
 data = response.json()
 
 # 2. Extract historical TVL data for Arbitrum and Arbitrum-borrowed
 arbitrum_tvl_list = data["chainTvls"]["Arbitrum"]["tvl"]
-arbitrum_borrowed_list = data["chainTvls"]["Arbitrum-borrowed"]["tvl"]
+arbitrum_staking_list = data["chainTvls"]["Arbitrum-staking"]["tvl"]
 chain = "Arbitrum"
 
 # 3. Build a dict for borrowed TVL by date for fast lookup
-borrowed_by_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_borrowed_list}
+staking_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_staking_list}
 
-csv_file_path = 'defillama_aave.csv'
+csv_file_path = 'defillama_gmx.csv'
 
 # 4. Save as CSV (each row: date, chain, totalLiquidityUSD, totalBorrowedLiquidityUSD)
 with open(csv_file_path, 'w', newline='') as csvfile:
@@ -27,7 +27,7 @@ with open(csv_file_path, 'w', newline='') as csvfile:
         # Convert UNIX timestamp to ISO8601 date (timezone-aware)
         date_iso = datetime.fromtimestamp(entry['date'], timezone.utc).isoformat()
         total_liquidity = entry['totalLiquidityUSD']
-        borrowed_liquidity = borrowed_by_date.get(entry['date'], None)
+        borrowed_liquidity = staking_date.get(entry['date'], None)
         writer.writerow([date_iso, chain, total_liquidity, borrowed_liquidity])
 
 print(f"Saved historical Arbitrum TVL and borrowed data to {csv_file_path}")
@@ -40,7 +40,7 @@ def upload_to_dune(csv_file_path):
         with open(csv_file_path, "rb") as data:
             response = dune.insert_table(
                 namespace="0xpibs",
-                table_name="defillama_aave_arbitrum",
+                table_name="defillama_gmx_arbitrum",
                 data=data,
                 content_type="text/csv"
             )
@@ -49,4 +49,4 @@ def upload_to_dune(csv_file_path):
     except Exception as e:
         print(f"Error uploading to Dune: {str(e)}")
 
-upload_to_dune("defillama_aave.csv")
+upload_to_dune("defillama_gmx.csv")
