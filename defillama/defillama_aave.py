@@ -2,6 +2,7 @@ import requests
 import csv
 from datetime import datetime, timezone
 from dune_client.client import DuneClient
+import dotenv
 
 # 1. Fetch the TVL from DefiLlama
 url = "https://api.llama.fi/protocol/aave"
