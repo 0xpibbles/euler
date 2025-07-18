@@ -42,8 +42,6 @@ print(f"Saved historical Arbitrum TVL and borrowed data to {csv_file_path}")
 # 5. Upload to Dune via API
 def upload_to_dune(csv_file_path):
     try:
-        from dune_client.client import DuneClient
-        dune = DuneClient("DUNE_API_KEY")  # <-- Replace with your actual API key
         with open(csv_file_path, "rb") as data:
             response = dune.insert_table(
                 namespace="0xpibs",
