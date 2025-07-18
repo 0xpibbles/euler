@@ -21,7 +21,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Set Environment Variables
-        run: echo "DUNE_API_KEY=${{ secrets.RUMPEL_DUNE_API_KEY }}" >> $GITHUB_ENV
+        run: echo "DUNE_API_KEY=${{ secrets.DUNE_API_KEY }}" >> $GITHUB_ENV
 
       - name: Run Script
         run: python defillama/defillama_aave.py
