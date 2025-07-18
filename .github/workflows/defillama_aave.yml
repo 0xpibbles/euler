@@ -24,4 +24,4 @@ jobs:
         run: echo "DUNE_API_KEY=${{ secrets.RUMPEL_DUNE_API_KEY }}" >> $GITHUB_ENV
 
       - name: Run Script
-        run: python defillama_aave.py
+        run: python defillama/defillama_aave.py
