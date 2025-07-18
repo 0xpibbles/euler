@@ -26,7 +26,7 @@ urls = {
     'berachain': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/80094/vaults.json',
     'avalanche_c': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/43114/vaults.json',
     'bnb': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/56/vaults.json',
-    # 'arbitrum': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/42161/vaults.json',
+    'arbitrum': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/42161/vaults.json'
     # 'optimism': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/10/vaults.json',
     # 'linea': 'https://raw.githubusercontent.com/euler-xyz/euler-labels/refs/heads/master/59144/vaults.json',
 
