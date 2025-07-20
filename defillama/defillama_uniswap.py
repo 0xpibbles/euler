@@ -10,8 +10,8 @@ dune = DuneClient.from_env()
 # 1. Query the latest date from Dune
 def get_latest_date_from_dune():
     query = QueryBase(
-        name="Get Latest Date",
-        sql="SELECT MAX(date_trunc('day', date)) as latest_date FROM dune.""0xpibs"".defillama_uniswap_arbitrum"
+        query_id=5448746,  # Replace with your actual query ID
+        name="Get Latest Date"
     )
     result = dune.run_query(query)
     rows = result.get_rows()
