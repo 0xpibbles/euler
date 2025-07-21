@@ -25,7 +25,9 @@ def get_latest_date_from_dune(protocol_name):
     rows = result.get_rows()
     if rows and rows[0]['latest_date']:
         # Parse date string like '2025-07-19 00:00:00.000 UTC'
-        return datetime.strptime(rows[0]['latest_date'], "%Y-%m-%d %H:%M:%S.%f %Z")
+        latest_date = datetime.strptime(rows[0]['latest_date'], "%Y-%m-%d %H:%M:%S.%f %Z")
+        latest_date = latest_date.replace(tzinfo=timezone.utc)
+        return latest_date
     return None
 
 protocol = "GMX"
