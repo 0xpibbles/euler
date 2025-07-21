@@ -27,3 +27,15 @@ jobs:
         run: |
           python defillama/defillama_aave.py
           python defillama/defillama_gmx.py
+          python defillama/defillama_uniswap.py
+          python defillama/defillama_camelot.py
+          python defillama/defillama_compound.py
+          python defillama/defillama_defi_saver.py
+          python defillama/defillama_dolomite.py
+          python defillama/defillama_euler.py
+          python defillama/defillama_fluid.py
+          python defillama/defillama_franklin_templeton.py
+          python defillama/defillama_pendle.py
+          python defillama/defillama_spiko.py
+          python defillama/defillama_stables_labs_usdx.py
+          python defillama/defillama_stargate.py
