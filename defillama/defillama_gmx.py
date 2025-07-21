@@ -23,12 +23,12 @@ def get_latest_date_from_dune(protocol_name):
     )
     result = dune.run_query(query)
     rows = result.get_rows()
+    # Parse the latest date from Dune as a date object
     if rows and rows[0]['latest_date']:
-        # Parse date string like '2025-07-19 00:00:00.000 UTC'
-        latest_date = datetime.strptime(rows[0]['latest_date'], "%Y-%m-%d %H:%M:%S.%f %Z")
-        latest_date = latest_date.replace(tzinfo=timezone.utc)
-        return latest_date
-    return None
+        latest_date = datetime.strptime(rows[0]['latest_date'], "%Y-%m-%d %H:%M:%S.%f %Z").date()
+    else:
+        latest_date = None
+    return latest_date
 
 protocol = "GMX"
 latest_date = get_latest_date_from_dune(protocol)
@@ -51,12 +51,12 @@ staking_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_
 # 5. Filter for new data only
 new_rows = []
 for entry in arbitrum_tvl_list:
-    date_iso = datetime.fromtimestamp(entry['date'], timezone.utc)
-    if not latest_date or date_iso > latest_date:
+    entry_date = datetime.fromtimestamp(entry['date'], timezone.utc).date()
+    if not latest_date or entry_date > latest_date:
         total_liquidity = entry['totalLiquidityUSD']
         borrowed_liquidity = staking_date.get(entry['date'], None)
         new_rows.append([
-            date_iso.isoformat(), protocol, chain, total_liquidity, borrowed_liquidity
+            entry_date.isoformat(), protocol, chain, total_liquidity, borrowed_liquidity
         ])
 
 csv_file_path = 'defillama_gmx_new.csv'
