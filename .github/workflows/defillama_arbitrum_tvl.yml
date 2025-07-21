@@ -26,16 +26,29 @@ jobs:
       - name: Run all scripts
         run: |
           python defillama/defillama_aave.py
+          sleep 20
           python defillama/defillama_gmx.py
+          sleep 20
           python defillama/defillama_uniswap.py
+          sleep 20
           python defillama/defillama_camelot.py
+          sleep 20
           python defillama/defillama_compound.py
+          sleep 20
           python defillama/defillama_defi_saver.py
+          sleep 20
           python defillama/defillama_dolomite.py
+          sleep 20
           python defillama/defillama_euler.py
+          sleep 20
           python defillama/defillama_fluid.py
+          sleep 20
           python defillama/defillama_franklin_templeton.py
+          sleep 20
           python defillama/defillama_pendle.py
+          sleep 20
           python defillama/defillama_spiko.py
+          sleep 20
           python defillama/defillama_stables_labs_usdx.py
+          sleep 20
           python defillama/defillama_stargate.py
