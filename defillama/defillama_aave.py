@@ -16,7 +16,7 @@ dune = DuneClient.from_env()
 def get_latest_date_from_dune(protocol_name):
     query = QueryBase(
         name="Get Latest Date",
-        query_id=5448746,  # <-- Make sure this is your query ID
+        query_id=5448746,  # <-- Replace with your actual query ID
         params=[
             QueryParameter.text_type(name="protocol", value=protocol_name)
         ]
@@ -25,9 +25,10 @@ def get_latest_date_from_dune(protocol_name):
     rows = result.get_rows()
     # Parse the latest date from Dune as a date object
     if rows and rows[0]['latest_date']:
-        # We get a string like '2025-07-19 00:00:00.000 UTC', parse it and get only the .date()
-        return datetime.strptime(rows[0]['latest_date'], "%Y-%m-%d %H:%M:%S.%f %Z").date()
-    return None
+        latest_date = datetime.strptime(rows[0]['latest_date'], "%Y-%m-%d %H:%M:%S.%f %Z").date()
+    else:
+        latest_date = None
+    return latest_date
 
 protocol = "Aave"
 latest_date = get_latest_date_from_dune(protocol)
@@ -38,21 +39,22 @@ response = requests.get(url)
 response.raise_for_status()
 data = response.json()
 
-# 3. Extract historical TVL data for Arbitrum and Arbitrum-borrowed
+# 3. Extract historical TVL data and build lookups
 arbitrum_tvl_list = data["chainTvls"]["Arbitrum"]["tvl"]
 arbitrum_borrowed_list = data["chainTvls"]["Arbitrum-borrowed"]["tvl"]
+borrowed_by_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_borrowed_list}
 chain = "Arbitrum"
 protocol = "Aave"
 
-# 4. Build a dict for borrowed TVL by date for fast lookup
-borrowed_by_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_borrowed_list}
-
-# 5. Filter for new data only based on the DAY
-new_rows = []
+# 4. Process API data to get only the latest entry per day
+latest_entries = {}
 for entry in arbitrum_tvl_list:
-    # Get just the date part from the API timestamp
     entry_date = datetime.fromtimestamp(entry['date'], timezone.utc).date()
-    # Compare dates (not datetimes)
+    latest_entries[entry_date] = entry # Overwrites earlier entries for the same day
+
+# 5. Filter for new data only, using the latest entry for each day
+new_rows = []
+for entry_date, entry in latest_entries.items():
     if not latest_date or entry_date > latest_date:
         total_liquidity = entry['totalLiquidityUSD']
         borrowed_liquidity = borrowed_by_date.get(entry['date'], None)

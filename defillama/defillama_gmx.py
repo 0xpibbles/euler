@@ -39,19 +39,22 @@ response = requests.get(url)
 response.raise_for_status()
 data = response.json()
 
-# 2. Extract historical TVL data for Arbitrum and Arbitrum-borrowed
+# 3. Extract historical TVL data and build a lookup for staking data
 arbitrum_tvl_list = data["chainTvls"]["Arbitrum"]["tvl"]
 arbitrum_staking_list = data["chainTvls"]["Arbitrum-staking"]["tvl"]
+staking_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_staking_list}
 chain = "Arbitrum"
 protocol = "GMX"
 
-# 3. Build a dict for borrowed TVL by date for fast lookup
-staking_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_staking_list}
-
-# 5. Filter for new data only
-new_rows = []
+# 4. Process API data to get only the latest entry per day
+latest_entries = {}
 for entry in arbitrum_tvl_list:
     entry_date = datetime.fromtimestamp(entry['date'], timezone.utc).date()
+    latest_entries[entry_date] = entry  # Overwrites earlier entries for the same day
+
+# 5. Filter for new data only, using the latest entry for each day
+new_rows = []
+for entry_date, entry in latest_entries.items():
     if not latest_date or entry_date > latest_date:
         total_liquidity = entry['totalLiquidityUSD']
         borrowed_liquidity = staking_date.get(entry['date'], None)
