@@ -20,6 +20,7 @@ data = response.json()
 arbitrum_tvl_list = data["chainTvls"]["Arbitrum"]["tvl"]
 arbitrum_staking_list = data["chainTvls"]["Arbitrum-staking"]["tvl"]
 chain = "Arbitrum"
+protocol = "GMX"
 
 # 3. Build a dict for borrowed TVL by date for fast lookup
 staking_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_staking_list}
@@ -29,13 +30,13 @@ csv_file_path = 'defillama_gmx.csv'
 # 4. Save as CSV (each row: date, chain, totalLiquidityUSD, totalBorrowedLiquidityUSD)
 with open(csv_file_path, 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
-    writer.writerow(['date', 'chain', 'total_liquidity_usd', 'total_staking_liquidity_usd'])
+    writer.writerow(['date', 'protocol', 'chain', 'total_liquidity_usd', 'total_staking_liquidity_usd'])
     for entry in arbitrum_tvl_list:
         # Convert UNIX timestamp to ISO8601 date (timezone-aware)
         date_iso = datetime.fromtimestamp(entry['date'], timezone.utc).isoformat()
         total_liquidity = entry['totalLiquidityUSD']
         borrowed_liquidity = staking_date.get(entry['date'], None)
-        writer.writerow([date_iso, chain, total_liquidity, borrowed_liquidity])
+        writer.writerow([date_iso, protocol, chain, total_liquidity, borrowed_liquidity])
 
 print(f"Saved historical Arbitrum TVL and borrowed data to {csv_file_path}")
 
