@@ -21,7 +21,7 @@ def get_latest_date_from_dune(protocol_name):
             QueryParameter.text_type(name="protocol", value=protocol_name)
         ]
     )
-    result = dune.run_query(query, ping_frequency=15)
+    result = dune.run_query(query, ping_frequency=30)
     rows = result.get_rows()
     # Parse the latest date from Dune as a date object
     if rows and rows[0]['latest_date']:
