@@ -32,7 +32,7 @@ protocol = "Franklin Templeton"
 latest_date = get_latest_date_from_dune(protocol)
 
 # 2. Fetch API data
-url = "https://api.llama.fi/protocol/frankline-templeton"
+url = "https://api.llama.fi/protocol/franklin-templeton"
 response = requests.get(url)
 response.raise_for_status()
 data = response.json()
