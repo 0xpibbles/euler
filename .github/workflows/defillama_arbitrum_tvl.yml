@@ -52,3 +52,9 @@ jobs:
           python defillama/defillama_stables_labs_usdx.py
           sleep 20
           python defillama/defillama_stargate.py
+          sleep 20
+          python defillama/defillama_curve.py
+          sleep 20
+          python defillama/defillama_sushiswap.py
+          sleep 20
+          python defillama/defillama_silo.py
