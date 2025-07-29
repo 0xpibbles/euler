@@ -68,7 +68,7 @@ if new_rows:
     try:
         with open(csv_file_path, "rb") as data:
             response = dune.insert_table(
-                namespace="0xpibs",
+                namespace="entropy_advisors",
                 table_name="defillama_dolomite_arbitrum",
                 data=data,
                 content_type="text/csv"
