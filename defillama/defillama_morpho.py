@@ -1,5 +1,6 @@
 import requests
 import csv
+import json
 from datetime import datetime, timezone
 from dune_client.client import DuneClient
 from dotenv import load_dotenv
@@ -12,7 +13,7 @@ load_dotenv()
 # Initialize Dune client
 dune = DuneClient.from_env()
 
-# 1. Query the latest date for Aave from Dune
+# 1. Query the latest date for Euler from Dune
 def get_latest_date_from_dune(protocol_name):
     query = QueryBase(
         name="Get Latest Date",
@@ -40,28 +41,42 @@ response.raise_for_status()
 data = response.json()
 
 # 3. Extract historical TVL data and build lookups
-arbitrum_tvl_list = data["chainTvls"]["Arbitrum"]["tvl"]
-arbitrum_borrowed_list = data["chainTvls"]["Arbitrum-borrowed"]["tvl"]
-borrowed_by_date = {entry['date']: entry['totalLiquidityUSD'] for entry in arbitrum_borrowed_list}
-chain = "Arbitrum"
-protocol = "Morpho"
+chain_tvls = data["chainTvls"]
 
-# 4. Process API data to get only the latest entry per day
-latest_entries = {}
-for entry in arbitrum_tvl_list:
-    entry_date = datetime.fromtimestamp(entry['date'], timezone.utc).date()
-    latest_entries[entry_date] = entry # Overwrites earlier entries for the same day
+# Split into normal and borrowed chains
+chains = set()
+for key in chain_tvls.keys():
+    if "-borrowed" in key:
+        chains.add(key.replace("-borrowed", ""))
+    else:
+        chains.add(key)
 
-# 5. Filter for new data only, using the latest entry for each day
+protocol = data["name"]  # Use actual name from API
+
 new_rows = []
-for entry_date, entry in latest_entries.items():
-    if not latest_date or entry_date > latest_date:
-        total_liquidity = entry['totalLiquidityUSD']
-        borrowed_liquidity = borrowed_by_date.get(entry['date'], None)
-        new_rows.append([
-            entry_date.isoformat(), protocol, chain, total_liquidity, borrowed_liquidity
-        ])
 
+for chain in chains:
+    tvl_list = chain_tvls.get(chain, {}).get("tvl", [])
+    borrowed_list = chain_tvls.get(f"{chain}-borrowed", {}).get("tvl", [])
+    borrowed_by_date = {entry["date"]: entry["totalLiquidityUSD"] for entry in borrowed_list}
+
+    latest_entries = {}
+    for entry in tvl_list:
+        # Defensive parse (API can sometimes return stringified JSON)
+        if isinstance(entry, str):
+            entry = json.loads(entry)
+
+        entry_date = datetime.fromtimestamp(entry["date"], timezone.utc).date()
+        # Overwrite to keep latest entry for the day
+        latest_entries[entry_date] = entry
+
+    for entry_date, entry in latest_entries.items():
+        if not latest_date or entry_date > latest_date:
+            total_liquidity = entry["totalLiquidityUSD"]
+            borrowed_liquidity = borrowed_by_date.get(entry["date"], None)
+            new_rows.append([
+                entry_date.isoformat(), protocol, chain, total_liquidity, borrowed_liquidity
+            ])
 csv_file_path = 'defillama_morpho_new.csv'
 
 # 6. Save as CSV (each row: date, protocol, chain, total_liquidity_usd, total_borrowed_liquidity_usd)
@@ -77,7 +92,7 @@ if new_rows:
         with open(csv_file_path, "rb") as data:
             response = dune.insert_table(
                 namespace="entropy_advisors",
-                table_name="defillama_morpho_arbitrum",
+                table_name="defillama_protocol_tvl",
                 data=data,
                 content_type="text/csv"
             )

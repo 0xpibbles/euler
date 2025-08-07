@@ -92,7 +92,7 @@ if new_rows:
         with open(csv_file_path, "rb") as data:
             response = dune.insert_table(
                 namespace="entropy_advisors",
-                table_name="defillama_euler",
+                table_name="defillama_protocol_tvl",
                 data=data,
                 content_type="text/csv"
             )
