@@ -1,4 +1,4 @@
-name: Run defillama_arbitrum_tvl
+name: Run defillama_tvl
 
 on:
   schedule:
