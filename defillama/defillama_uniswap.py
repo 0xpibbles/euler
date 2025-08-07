@@ -107,7 +107,7 @@ for chain in chains:
             new_rows.append([
                 entry_date.isoformat(),
                 protocol,
-                chain.lower()   ,
+                chain.lower(),
                 total_liquidity,
                 borrowed,
                 pool2,
