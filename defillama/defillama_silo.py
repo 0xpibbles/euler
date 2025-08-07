@@ -43,47 +43,84 @@ data = response.json()
 # 3. Extract historical TVL data and build lookups
 chain_tvls = data["chainTvls"]
 
-# Split into normal and borrowed chains
+suffixes = ["-borrowed", "-staking", "-pool2"]
+invalid_chain_names = {"borrowed", "staking", "pool2"}
+
 chains = set()
 for key in chain_tvls.keys():
-    if "-borrowed" in key:
-        chains.add(key.replace("-borrowed", ""))
-    else:
+    # Strip suffixes
+    for suffix in suffixes:
+        if key.endswith(suffix):
+            key = key.replace(suffix, "")
+            break
+    # Filter out invalid chain names
+    if key.lower() not in invalid_chain_names:
         chains.add(key)
 
 protocol = data["name"]  # Use actual name from API
+
+output_columns = [
+    'date',
+    'protocol',
+    'chain',
+    'total_liquidity_usd',
+    'total_borrowed_liquidity_usd',
+    'pool2_liquidity_usd',
+    'staking_liquidity_usd'
+]
 
 new_rows = []
 
 for chain in chains:
     tvl_list = chain_tvls.get(chain, {}).get("tvl", [])
     borrowed_list = chain_tvls.get(f"{chain}-borrowed", {}).get("tvl", [])
+    pool2_list = chain_tvls.get(f"{chain}-pool2", {}).get("tvl", [])
+    staking_list = chain_tvls.get(f"{chain}-staking", {}).get("tvl", [])
+
+    # Create lookup maps
+    has_separate_borrowed = bool(borrowed_list)
     borrowed_by_date = {entry["date"]: entry["totalLiquidityUSD"] for entry in borrowed_list}
+    pool2_by_date = {entry["date"]: entry["totalLiquidityUSD"] for entry in pool2_list}
+    staking_by_date = {entry["date"]: entry["totalLiquidityUSD"] for entry in staking_list}
 
     latest_entries = {}
     for entry in tvl_list:
-        # Defensive parse (API can sometimes return stringified JSON)
         if isinstance(entry, str):
             entry = json.loads(entry)
-
         entry_date = datetime.fromtimestamp(entry["date"], timezone.utc).date()
-        # Overwrite to keep latest entry for the day
         latest_entries[entry_date] = entry
 
     for entry_date, entry in latest_entries.items():
         if not latest_date or entry_date > latest_date:
+            timestamp = entry["date"]
             total_liquidity = entry["totalLiquidityUSD"]
-            borrowed_liquidity = borrowed_by_date.get(entry["date"], None)
+
+            # Borrowed liquidity: use separate table if exists, otherwise fallback to in-entry
+            if has_separate_borrowed:
+                borrowed = borrowed_by_date.get(timestamp, 0)
+            else:
+                borrowed = entry.get("borrowedLiquidityUSD", 0)
+
+            pool2 = pool2_by_date.get(timestamp, 0)
+            staking = staking_by_date.get(timestamp, 0)
+
             new_rows.append([
-                entry_date.isoformat(), protocol, chain, total_liquidity, borrowed_liquidity
+                entry_date.isoformat(),
+                protocol,
+                chain.lower(),
+                total_liquidity,
+                borrowed,
+                pool2,
+                staking
             ])
+
 csv_file_path = 'defillama_silo_new.csv'
 
 # 6. Save as CSV (each row: date, protocol, chain, total_liquidity_usd, total_borrowed_liquidity_usd)
 if new_rows:
     with open(csv_file_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['date', 'protocol', 'chain', 'total_liquidity_usd', 'total_borrowed_liquidity_usd'])
+        writer.writerow(['date', 'protocol', 'chain', 'total_liquidity_usd', 'total_borrowed_liquidity_usd', 'pool2_liquidity_usd', 'staking_liquidity_usd'])
         writer.writerows(new_rows)
     print(f"Saved {len(new_rows)} new rows to {csv_file_path}")
 
