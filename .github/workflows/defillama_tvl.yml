@@ -58,3 +58,5 @@ jobs:
           python defillama/defillama_silo.py
           sleep 10
           python defillama/defillama_renzo.py
+          sleep 10
+          python defillama/defillama_morpho.py
