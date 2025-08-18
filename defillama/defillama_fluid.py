@@ -31,7 +31,7 @@ def get_latest_date_from_dune(protocol_name):
         latest_date = None
     return latest_date
 
-protocol = "Fluid"
+protocol = "fluid"
 latest_date = get_latest_date_from_dune(protocol)
 
 # 2. Fetch the TVL from DefiLlama
@@ -57,7 +57,7 @@ for key in chain_tvls.keys():
     if key.lower() not in invalid_chain_names:
         chains.add(key)
 
-protocol = data["name"]  # Use actual name from API
+protocol = data["name"].lower()  # Normalize to lowercase for consistency
 
 output_columns = [
     'date',

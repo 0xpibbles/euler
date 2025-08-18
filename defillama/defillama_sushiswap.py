@@ -57,7 +57,7 @@ for key in chain_tvls.keys():
     if key.lower() not in invalid_chain_names:
         chains.add(key)
 
-protocol = data["name"]  # Use actual name from API
+protocol = data["name"].lower()  # Normalize to lowercase for consistency
 
 output_columns = [
     'date',
