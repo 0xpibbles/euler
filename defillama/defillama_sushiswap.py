@@ -31,7 +31,7 @@ def get_latest_date_from_dune(protocol_name):
         latest_date = None
     return latest_date
 
-protocol = "SushiSwap"
+protocol = "sushiswap"
 latest_date = get_latest_date_from_dune(protocol)
 
 # 2. Fetch the TVL from DefiLlama
