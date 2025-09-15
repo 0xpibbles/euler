@@ -42,8 +42,8 @@ jobs:
           python defillama/defillama_euler.py
           sleep 10
           python defillama/defillama_fluid.py
-          sleep 10
-          python defillama/defillama_franklin_templeton.py
+          # sleep 10
+          # python defillama/defillama_franklin_templeton.py
           sleep 10
           python defillama/defillama_pendle.py
           sleep 10
